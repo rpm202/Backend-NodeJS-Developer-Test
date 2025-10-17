@@ -14,12 +14,12 @@ Event.hasMany(Booking, { foreignKey: "events_id", onDelete: "CASCADE" });
 (async () => {
     try {
         await sequelize.authenticate();
-        console.log("✅ MySQL connection established");
+        console.log("MySQL connection established");
 
         await sequelize.sync({ alter: true })
-        console.log("✅ Tables synchronized");
+        console.log("Tables synchronized");
     } catch (err) {
-        console.error("❌ Database connection error:", err);
+        console.error("Database connection error:", err);
     }
 })();
 
@@ -53,6 +53,28 @@ app.post("/api/bookings/reserve", async (req, res) => {
             message: "Booking successful",
             bookingId: booking.id,
         });
+
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({ detail: "Server error" });
+    }
+});
+
+app.get("/api/bookings/first10", async (req, res) => {
+    try {
+        const firstTenBookings = await Booking.findAll({
+            limit: 10,
+            order: [["created_at", "ASC"]],
+            attributes: ["user_id", "events_id", "created_at"],
+            include: [
+                {
+                    model: Event,
+                    attributes: ["name"],
+                },
+            ],
+        });
+
+        return res.json(firstTenBookings);
     } catch (err) {
         console.error("Error:", err);
         return res.status(500).json({ detail: "Server error" });
